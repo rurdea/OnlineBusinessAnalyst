@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineBusinessAnalystCrawler", "OnlineBusinessAnalystCrawler\OnlineBusinessAnalystCrawler.csproj", "{D4A42F2C-5BAC-4F61-9670-E009B95832DD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineBusinessAnalyst", "OnlineBusinessAnalyst\OnlineBusinessAnalyst.csproj", "{6C1F29AD-FCB3-46A6-AE27-D5480F850219}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,16 @@ Global
 		{D4A42F2C-5BAC-4F61-9670-E009B95832DD}.Release|Mixed Platforms.Build.0 = Release|x86
 		{D4A42F2C-5BAC-4F61-9670-E009B95832DD}.Release|x86.ActiveCfg = Release|x86
 		{D4A42F2C-5BAC-4F61-9670-E009B95832DD}.Release|x86.Build.0 = Release|x86
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6C1F29AD-FCB3-46A6-AE27-D5480F850219}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
