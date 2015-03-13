@@ -13,6 +13,8 @@ namespace OnlineBusinessAnalyst
         private List<CrawlerThread> _activeCrawlers = new List<CrawlerThread>();
         // queue for storing urls that need to be crawled
         private Queue<string> _urlQueue = new Queue<string>();
+        // list for visited urls;
+        private List<string> _visitedUrls = new List<string>();
         #endregion
 
         #region Properties
@@ -63,13 +65,21 @@ namespace OnlineBusinessAnalyst
             get;
             private set;
         }
+
+        public string[] VisitedUrls
+        {
+            get
+            {
+                return _visitedUrls.ToArray();
+            }
+        }
         #endregion
 
         public CrawlerThreadManager(string startUrl, string urlRegEx, string contentRegEx, int maxThreads, int requestTimeout, int searchTimeout, int downloadTimeout)
         {
             this.StartUrl = startUrl;
             this.UrlRegEx = urlRegEx;
-            this.ContentRegEx = ContentRegEx;
+            this.ContentRegEx = contentRegEx;
             this.MaxThreads = maxThreads;
             this.RequestTimeout = requestTimeout;
             this.SearchTimeout = searchTimeout;
@@ -83,7 +93,7 @@ namespace OnlineBusinessAnalyst
             if (!IsBusy)
             {
                 _activeCrawlers.Clear();
-
+                AddCrawlerThread(this.StartUrl);
                 this.IsBusy = true;
             }
         }
@@ -102,14 +112,25 @@ namespace OnlineBusinessAnalyst
         #region Private
         private void AddCrawlerThread(string url)
         {
-            var thread = new CrawlerThread(this.StartUrl, this.UrlRegEx, this.ContentRegEx);
-            thread.UrlFound += new EventHandler(thread_UrlFound);
-            thread.ContentFound += new EventHandler(thread_ContentFound);
-            thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
+            // clean url
+            url = url.Trim();
 
-            _activeCrawlers.Add(thread);
+            if (!_visitedUrls.Contains(url, StringComparer.OrdinalIgnoreCase))
+            {
+                _visitedUrls.Add(url);
+                var thread = new CrawlerThread(url, this.UrlRegEx, this.ContentRegEx);
+                thread.UrlFound += new EventHandler<CrawlerThreadEventArgs>(thread_UrlFound);
+                thread.ContentFound += new EventHandler<CrawlerThreadEventArgs>(thread_ContentFound);
+                thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
 
-            thread.Start();
+                _activeCrawlers.Add(thread);
+
+                thread.Start();
+            }
+            else
+            {
+                LogManager.Instance.Logger.Debug("Url already visited: {0}.", url);
+            }
         }
 
         #region CrawlerThread Event Handlers
@@ -125,21 +146,21 @@ namespace OnlineBusinessAnalyst
             }
         }
 
-        void thread_ContentFound(object sender, EventArgs e)
+        void thread_ContentFound(object sender, CrawlerThreadEventArgs e)
         {
             // save in file
         }
 
-        void thread_UrlFound(object sender, EventArgs e)
+        void thread_UrlFound(object sender, CrawlerThreadEventArgs e)
         {
             // start crawling of add to queue if max threads is reached
             if (_activeCrawlers.Count < MaxThreads)
             {
-                AddCrawlerThread(e.ToString());
+                AddCrawlerThread(e.Match);
             }
             else
             {
-                _urlQueue.Enqueue(e.ToString());
+                _urlQueue.Enqueue(e.Match);
             }
         }
         #endregion

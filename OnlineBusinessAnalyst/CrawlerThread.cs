@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Net;
 using System.IO;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace OnlineBusinessAnalyst
 {
@@ -44,8 +45,8 @@ namespace OnlineBusinessAnalyst
         #endregion
 
         #region Events
-        public event EventHandler UrlFound;
-        public event EventHandler ContentFound;
+        public event EventHandler<CrawlerThreadEventArgs> UrlFound;
+        public event EventHandler<CrawlerThreadEventArgs> ContentFound;
         public event EventHandler CrawlCompleted;
         #endregion
 
@@ -54,7 +55,7 @@ namespace OnlineBusinessAnalyst
         {
             this.Url = url;
             this.UrlRegEx = urlRegEx;
-            this.ContentRegEx = ContentRegEx;
+            this.ContentRegEx = contentRegEx;
 
             _worker = new BackgroundWorker();
             _worker.WorkerSupportsCancellation = true;
@@ -97,25 +98,55 @@ namespace OnlineBusinessAnalyst
             try
             {
                 // to do: handle redirects?
+                
                 var request = HttpWebRequest.Create(this.Url) as HttpWebRequest;
                 var response = request.GetResponse() as HttpWebResponse;
-                if (response != null && response.StatusCode == HttpStatusCode.OK)
+                var status = response != null ? response.StatusCode : HttpStatusCode.ServiceUnavailable;
+
+                LogManager.Instance.Logger.Info("Request: {0}\tStatus: {1}", this.Url, status.ToString());
+                if (status == HttpStatusCode.OK)
                 {
                     using (var reader = new StreamReader(response.GetResponseStream()))
                     {
-                        // to do: apply the regex on the response
+                        // to do: may be a good idea to parse the content in chunks rather than all at once
+                        // optimization needed
+
+                        var content = reader.ReadToEnd();
+                        var urlExpr = new Regex(this.UrlRegEx);
+                        var urlResults = urlExpr.Matches(content);
+                        foreach (Match match in urlResults)
+                        {
+                            // fire url found
+                            if (UrlFound != null)
+                            {
+                                UrlFound(this, new CrawlerThreadEventArgs(match.Value));
+                            }
+                        }
+
+                        var contentExpr = new Regex(this.ContentRegEx);
+                        var contentResults = contentExpr.Matches(content);
+                        foreach(Match match in contentResults)
+                        {
+                            if (ContentFound!=null)
+                            {
+                                ContentFound(this, new CrawlerThreadEventArgs(match.Value));
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.ToString());
+                LogManager.Instance.Logger.Error("Error making or processing request.",  ex);
             }
         }
 
         void _worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            // fire crawl completed
+            if (this.CrawlCompleted != null)
+            {
+                this.CrawlCompleted(this, null);
+            }
         }
         #endregion
         #endregion

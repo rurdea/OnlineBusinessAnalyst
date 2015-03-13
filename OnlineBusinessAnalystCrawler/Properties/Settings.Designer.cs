@@ -34,7 +34,7 @@ namespace OnlineBusinessAnalystCrawler.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("test")]
+        [global::System.Configuration.DefaultSettingValueAttribute("^http(s)?://([\\w-]+.)+[\\w-]+(/[\\w- ./?%&=])?$")]
         public string URLRegEx {
             get {
                 return ((string)(this["URLRegEx"]));
@@ -125,7 +125,7 @@ namespace OnlineBusinessAnalystCrawler.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http:\\\\crisoft.ro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost/ru_sff_sffbm/")]
         public string StartingURL {
             get {
                 return ((string)(this["StartingURL"]));

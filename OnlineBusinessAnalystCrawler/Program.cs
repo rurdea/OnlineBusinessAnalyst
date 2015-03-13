@@ -15,7 +15,7 @@ namespace OnlineBusinessAnalystCrawler
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Crawler());
+            Application.Run(new TestForm());
         }
     }
 }
