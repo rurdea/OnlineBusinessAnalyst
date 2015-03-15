@@ -26,7 +26,9 @@ namespace OnlineBusinessAnalystCrawler
                                                          Settings.Default.MaxWebThreads,
                                                          Settings.Default.RequestTimeOut,
                                                          Settings.Default.SearchTimeout,
-                                                         Settings.Default.DownloadTimeout);
+                                                         Settings.Default.DownloadTimeout,
+                                                         Settings.Default.SaveBuffer,
+                                                         Settings.Default.StorageInfo);
             threadManager.Start();
         }
     }

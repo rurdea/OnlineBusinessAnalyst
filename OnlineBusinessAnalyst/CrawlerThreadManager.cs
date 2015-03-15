@@ -15,6 +15,8 @@ namespace OnlineBusinessAnalyst
         private Queue<string> _urlQueue = new Queue<string>();
         // list for visited urls;
         private List<string> _visitedUrls = new List<string>();
+        // content saver instance
+        private ContentSaver.ContentSaver _contentSaver;
         #endregion
 
         #region Properties
@@ -66,6 +68,12 @@ namespace OnlineBusinessAnalyst
             private set;
         }
 
+        public int SaveBuffer
+        {
+            get;
+            private set;
+        }
+
         public string[] VisitedUrls
         {
             get
@@ -75,7 +83,7 @@ namespace OnlineBusinessAnalyst
         }
         #endregion
 
-        public CrawlerThreadManager(string startUrl, string urlRegEx, string contentRegEx, int maxThreads, int requestTimeout, int searchTimeout, int downloadTimeout)
+        public CrawlerThreadManager(string startUrl, string urlRegEx, string contentRegEx, int maxThreads, int requestTimeout, int searchTimeout, int downloadTimeout, int saveBuffer, string storageInfo)
         {
             this.StartUrl = startUrl;
             this.UrlRegEx = urlRegEx;
@@ -84,6 +92,8 @@ namespace OnlineBusinessAnalyst
             this.RequestTimeout = requestTimeout;
             this.SearchTimeout = searchTimeout;
             this.DownloadTimeout = downloadTimeout;
+            this.SaveBuffer = saveBuffer;
+            InitializeStorage(storageInfo);
         }
 
         #region Methods
@@ -110,6 +120,26 @@ namespace OnlineBusinessAnalyst
         #endregion
 
         #region Private
+        private void InitializeStorage(string storageInfo)
+        {
+            string[] split = !string.IsNullOrWhiteSpace(storageInfo) ? storageInfo.Split(';') : null;
+            if (split != null && split.Length >= 2)
+            {
+                switch (split[0].Trim().ToLower())
+                {
+                    case "file":
+                        _contentSaver = new ContentSaver.FileContentSaver(split[1].Trim(), this.SaveBuffer);
+                        break;
+                    // add different storages here
+                }
+            }
+            
+            if (_contentSaver==null)
+            {
+                LogManager.Instance.Logger.Warn("Invalid storage information, crawled contents will not be saved. Storage info: {0}.", storageInfo);
+            }
+        }
+
         private void AddCrawlerThread(string url)
         {
             // clean url
@@ -144,11 +174,21 @@ namespace OnlineBusinessAnalyst
                 var url = _urlQueue.Dequeue();
                 AddCrawlerThread(url);
             }
+            else if (_activeCrawlers.Count == 0)
+            { // save remaining content items if no other crawl exists
+                if (_contentSaver!=null)
+                {
+                    _contentSaver.SaveBuffer();
+                }
+            }
         }
 
         void thread_ContentFound(object sender, CrawlerThreadEventArgs e)
         {
-            // save in file
+            if (_contentSaver != null)
+            {
+                _contentSaver.SaveContentItem(e.Match);
+            }
         }
 
         void thread_UrlFound(object sender, CrawlerThreadEventArgs e)
