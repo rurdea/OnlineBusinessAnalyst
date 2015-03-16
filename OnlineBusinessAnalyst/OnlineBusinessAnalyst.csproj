@@ -43,6 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbortableBackgroundWorker.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ContentSaver\ContentSaver.cs" />
     <Compile Include="CrawlerThread.cs" />
     <Compile Include="CrawlerThreadEventArgs.cs" />

@@ -148,10 +148,11 @@ namespace OnlineBusinessAnalyst
             if (!_visitedUrls.Contains(url, StringComparer.OrdinalIgnoreCase))
             {
                 _visitedUrls.Add(url);
-                var thread = new CrawlerThread(url, this.UrlRegEx, this.ContentRegEx);
+                var thread = new CrawlerThread(url, this.UrlRegEx, this.ContentRegEx, this.RequestTimeout, this.DownloadTimeout, this.SearchTimeout);
                 thread.UrlFound += new EventHandler<CrawlerThreadEventArgs>(thread_UrlFound);
                 thread.ContentFound += new EventHandler<CrawlerThreadEventArgs>(thread_ContentFound);
                 thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
+                thread.ProgressChanged += thread_ProgressChanged;
 
                 _activeCrawlers.Add(thread);
 
@@ -202,6 +203,11 @@ namespace OnlineBusinessAnalyst
             {
                 _urlQueue.Enqueue(e.Match);
             }
+        }
+
+        void thread_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        {
+
         }
         #endregion
         #endregion

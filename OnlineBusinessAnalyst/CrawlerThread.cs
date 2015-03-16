@@ -7,13 +7,15 @@ using System.Net;
 using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Timers;
 
 namespace OnlineBusinessAnalyst
 {
     public class CrawlerThread
     {
         #region Members
-        private BackgroundWorker _worker;
+        private AbortableBackgroundWorker _worker;
+        private Timer _searchTimer;
         #endregion
 
         #region Properties
@@ -42,26 +44,52 @@ namespace OnlineBusinessAnalyst
             get;
             private set;
         }
+
+        public int RequestTimeout
+        {
+            get;
+            private set;
+        }
+
+        public int DownloadTimeout
+        {
+            get;
+            private set;
+        }
+
+        public int SearchTimeout
+        {
+            get;
+            private set;
+        }
         #endregion
 
         #region Events
         public event EventHandler<CrawlerThreadEventArgs> UrlFound;
         public event EventHandler<CrawlerThreadEventArgs> ContentFound;
+        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
         public event EventHandler CrawlCompleted;
         #endregion
 
         #region Constructor
-        public CrawlerThread(string url, string urlRegEx, string contentRegEx)
+        public CrawlerThread(string url, string urlRegEx, string contentRegEx, int requestTimeout, int downloadTimeout, int searchTimeout)
         {
             this.Url = url;
             this.UrlRegEx = urlRegEx;
             this.ContentRegEx = contentRegEx;
+            this.RequestTimeout = requestTimeout;
+            this.DownloadTimeout = downloadTimeout;
+            this.SearchTimeout = searchTimeout;
 
-            _worker = new BackgroundWorker();
+            _worker = new AbortableBackgroundWorker();
             _worker.WorkerSupportsCancellation = true;
+            _worker.WorkerReportsProgress = true;
             _worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(_worker_RunWorkerCompleted);
             _worker.DoWork += new DoWorkEventHandler(_worker_DoWork);
             _worker.ProgressChanged += new ProgressChangedEventHandler(_worker_ProgressChanged);
+
+            _searchTimer = new Timer(this.SearchTimeout);
+            _searchTimer.Elapsed += _searchTimer_Elapsed;
         }
 
         
@@ -91,6 +119,10 @@ namespace OnlineBusinessAnalyst
         #region Worker Event Handlers
         void _worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            if (this.ProgressChanged!=null)
+            {
+                this.ProgressChanged(this, e);
+            }
         }
 
         void _worker_DoWork(object sender, DoWorkEventArgs e)
@@ -100,7 +132,10 @@ namespace OnlineBusinessAnalyst
                 // to do: handle redirects?
                 
                 var request = HttpWebRequest.Create(this.Url) as HttpWebRequest;
+                request.Timeout = this.RequestTimeout;
+                request.ReadWriteTimeout = this.DownloadTimeout;
                 var response = request.GetResponse() as HttpWebResponse;
+                
                 var status = response != null ? response.StatusCode : HttpStatusCode.ServiceUnavailable;
 
                 LogManager.Instance.Logger.Info("Request: {0}\tStatus: {1}", this.Url, status.ToString());
@@ -112,6 +147,16 @@ namespace OnlineBusinessAnalyst
                         // optimization needed
 
                         var content = reader.ReadToEnd();
+
+                        if (_worker.CancellationPending)
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            _worker.ReportProgress(33);
+                        }
+
                         var urlExpr = new Regex(this.UrlRegEx);
                         var urlResults = urlExpr.Matches(content);
                         foreach (Match match in urlResults)
@@ -123,6 +168,15 @@ namespace OnlineBusinessAnalyst
                             }
                         }
 
+                        if (_worker.CancellationPending)
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            _worker.ReportProgress(66);
+                        }
+
                         var contentExpr = new Regex(this.ContentRegEx);
                         var contentResults = contentExpr.Matches(content);
                         foreach(Match match in contentResults)
@@ -132,6 +186,8 @@ namespace OnlineBusinessAnalyst
                                 ContentFound(this, new CrawlerThreadEventArgs(match.Value));
                             }
                         }
+
+                        _worker.ReportProgress(100);
                     }
                 }
             }
@@ -147,6 +203,19 @@ namespace OnlineBusinessAnalyst
             {
                 this.CrawlCompleted(this, null);
             }
+        }
+        #endregion
+
+        #region Search Timer Event Handlers
+        void _searchTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (_worker.IsBusy)
+            {
+                _worker.Abort();
+                LogManager.Instance.Logger.Warn("Search timeout elapsed, crawling stopped. Url: {0}.", this.Url);
+            }
+
+            _searchTimer.Stop();
         }
         #endregion
         #endregion
