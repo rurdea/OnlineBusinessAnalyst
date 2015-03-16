@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NLog">
+      <HintPath>..\3rd party\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,8 +43,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbortableBackgroundWorker.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ContentSaver\ContentSaver.cs" />
     <Compile Include="CrawlerThread.cs" />
+    <Compile Include="CrawlerThreadEventArgs.cs" />
     <Compile Include="CrawlerThreadManager.cs" />
+    <Compile Include="ContentSaver\FileContentSaver.cs" />
+    <Compile Include="LogManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

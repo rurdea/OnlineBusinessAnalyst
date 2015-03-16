@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="ContentRegEx" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">test</Value>
+      <Value Profile="(Default)">iis</Value>
     </Setting>
     <Setting Name="URLRegEx" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">test</Value>
+      <Value Profile="(Default)">^http(s)?://([\w-]+.)+[\w-]+(/[\w- ./?%&amp;=])?$</Value>
     </Setting>
     <Setting Name="MaxWebThreads" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">5</Value>
@@ -33,10 +33,10 @@
       <Value Profile="(Default)">CustomSearch</Value>
     </Setting>
     <Setting Name="StorageInfo" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">File;\\nv01500698.bmwgroup.net\qxg7813\visual studio 2010\Projects\OnlineBusinessAnalyst\OnlineBusinessAnalystCrawler\Logger\result.txt</Value>
+      <Value Profile="(Default)">File;output.txt</Value>
     </Setting>
     <Setting Name="StartingURL" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">http:\\crisoft.ro</Value>
+      <Value Profile="(Default)">http://localhost/</Value>
     </Setting>
     <Setting Name="sad" Type="System.Drawing.Point" Scope="Application">
       <Value Profile="(Default)">0, 0</Value>
