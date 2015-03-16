@@ -13,6 +13,7 @@ using MetroFramework.Forms;
 using OnlineBusinessAnalystCrawler.Utils;
 using OnlineBusinessAnalyst;
 using OnlineBusinessAnalystCrawler.Properties;
+using System.Diagnostics;
 
 namespace OnlineBusinessAnalystCrawler
 {
@@ -215,7 +216,26 @@ namespace OnlineBusinessAnalystCrawler
                                                          Settings.Default.DownloadTimeout,
                                                          Settings.Default.SaveBuffer,
                                                          Settings.Default.StorageInfo);
+            threadManager.CrawlStarted += threadManager_CrawlStarted;
+            threadManager.CrawlProgressChanged += threadManager_CrawlProgressChanged;
+            threadManager.CrawlCompleted += threadManager_CrawlCompleted;
             threadManager.Start();
+
+        }
+
+        void threadManager_CrawlCompleted(object sender, CrawlCompletedEventArgs e)
+        {
+            Debug.WriteLine(e.Url);
+        }
+
+        void threadManager_CrawlProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            Debug.WriteLine(((CrawlerEventArgs)e.UserState).Url);
+        }
+
+        void threadManager_CrawlStarted(object sender, CrawlerEventArgs e)
+        {
+            Debug.WriteLine(e.Url);
         }
 
         private void btnStop_Click(object sender, EventArgs e)

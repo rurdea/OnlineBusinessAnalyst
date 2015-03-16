@@ -1,5 +1,7 @@
-﻿using System;
+﻿using OnlineBusinessAnalyst.Internal;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -10,13 +12,19 @@ namespace OnlineBusinessAnalyst
         #region Members
         // to do: think about thread safety
         // list for storing active crawlers
-        private List<CrawlerThread> _activeCrawlers = new List<CrawlerThread>();
+        private ConcurrentList<CrawlerThread> _activeCrawlers = new ConcurrentList<CrawlerThread>();
         // queue for storing urls that need to be crawled
-        private Queue<string> _urlQueue = new Queue<string>();
+        private ConcurrentQueue<CrawlerThread> _crawlerQueue = new ConcurrentQueue<CrawlerThread>();
         // list for visited urls;
-        private List<string> _visitedUrls = new List<string>();
+        private ConcurrentList<string> _visitedUrls = new ConcurrentList<string>();
         // content saver instance
         private ContentSaver.ContentSaver _contentSaver;
+        #endregion
+
+        #region Events
+        public event EventHandler<CrawlerEventArgs> CrawlStarted;
+        public event EventHandler<ProgressChangedEventArgs> CrawlProgressChanged;
+        public event EventHandler<CrawlCompletedEventArgs> CrawlCompleted;
         #endregion
 
         #region Properties
@@ -103,7 +111,8 @@ namespace OnlineBusinessAnalyst
             if (!IsBusy)
             {
                 _activeCrawlers.Clear();
-                AddCrawlerThread(this.StartUrl);
+                var startThread = InitializeCrawlerThread(this.StartUrl, null);
+                StartCrawlerThread(startThread);
                 this.IsBusy = true;
             }
         }
@@ -140,28 +149,39 @@ namespace OnlineBusinessAnalyst
             }
         }
 
-        private void AddCrawlerThread(string url)
+        private CrawlerThread InitializeCrawlerThread(string url, string parentUrl)
         {
-            // clean url
+            // clean urls
             url = url.Trim();
+            parentUrl = parentUrl != null ? parentUrl.Trim() : parentUrl;
 
-            if (!_visitedUrls.Contains(url, StringComparer.OrdinalIgnoreCase))
+            var thread = new CrawlerThread(url, parentUrl, this.UrlRegEx, this.ContentRegEx, this.RequestTimeout, this.DownloadTimeout, this.SearchTimeout);
+            thread.UrlFound += new EventHandler<CrawlerThreadEventArgs>(thread_UrlFound);
+            thread.ContentFound += new EventHandler<CrawlerThreadEventArgs>(thread_ContentFound);
+            thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
+            thread.ProgressChanged += thread_ProgressChanged;
+
+            return thread;
+        }
+
+        private void TerminateThread(CrawlerThread thread)
+        {
+            thread.UrlFound -= new EventHandler<CrawlerThreadEventArgs>(thread_UrlFound);
+            thread.ContentFound += new EventHandler<CrawlerThreadEventArgs>(thread_ContentFound);
+            thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
+            thread.ProgressChanged += thread_ProgressChanged;
+            thread.Dispose();
+        }
+
+        private void StartCrawlerThread(CrawlerThread thread)
+        {
+            _visitedUrls.Add(thread.Url);
+            _activeCrawlers.Add(thread);
+            if (CrawlStarted!=null)
             {
-                _visitedUrls.Add(url);
-                var thread = new CrawlerThread(url, this.UrlRegEx, this.ContentRegEx, this.RequestTimeout, this.DownloadTimeout, this.SearchTimeout);
-                thread.UrlFound += new EventHandler<CrawlerThreadEventArgs>(thread_UrlFound);
-                thread.ContentFound += new EventHandler<CrawlerThreadEventArgs>(thread_ContentFound);
-                thread.CrawlCompleted += new EventHandler(thread_CrawlCompleted);
-                thread.ProgressChanged += thread_ProgressChanged;
-
-                _activeCrawlers.Add(thread);
-
-                thread.Start();
+                CrawlStarted(this, new CrawlerEventArgs(thread.Url, thread.ParentUrl));
             }
-            else
-            {
-                LogManager.Instance.Logger.Debug("Url already visited: {0}.", url);
-            }
+            thread.Start();
         }
 
         #region CrawlerThread Event Handlers
@@ -169,11 +189,20 @@ namespace OnlineBusinessAnalyst
         {
             var thread = sender as CrawlerThread;
             _activeCrawlers.Remove(thread);
-            // add new crawl if in queue
-            if (_urlQueue.Count > 0)
+
+            // fire crawl completed to the ui
+            if (CrawlCompleted!=null)
             {
-                var url = _urlQueue.Dequeue();
-                AddCrawlerThread(url);
+                CrawlCompleted(this, new CrawlCompletedEventArgs(thread.Url, thread.ParentUrl, thread.CrawlStatus));
+            }
+            // terminate the thread
+            TerminateThread(thread);
+
+            // add new crawl if in queue
+            if (_crawlerQueue.Count > 0)
+            {
+                var newThread = _crawlerQueue.Dequeue();
+                StartCrawlerThread(newThread);
             }
             else if (_activeCrawlers.Count == 0)
             { // save remaining content items if no other crawl exists
@@ -194,20 +223,33 @@ namespace OnlineBusinessAnalyst
 
         void thread_UrlFound(object sender, CrawlerThreadEventArgs e)
         {
-            // start crawling of add to queue if max threads is reached
-            if (_activeCrawlers.Count < MaxThreads)
+            if (!_visitedUrls.Contains(e.Match, StringComparer.OrdinalIgnoreCase))
             {
-                AddCrawlerThread(e.Match);
+                var thread = sender as CrawlerThread;
+                var newThread = InitializeCrawlerThread(e.Match, thread.Url);            
+                // start crawling of add to queue if max threads is reached
+                if (_activeCrawlers.Count < MaxThreads)
+                {
+                    StartCrawlerThread(newThread);
+                }
+                else
+                {
+                    _crawlerQueue.Enqueue(newThread);
+                }
             }
             else
             {
-                _urlQueue.Enqueue(e.Match);
+                LogManager.Instance.Logger.Debug("Url already visited: {0}.", e.Match);
             }
         }
 
         void thread_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
         {
-
+            if (CrawlProgressChanged != null)
+            {
+                var thread = sender as CrawlerThread;
+                CrawlProgressChanged(this, new ProgressChangedEventArgs(e.ProgressPercentage, new CrawlerEventArgs(thread.Url, thread.ParentUrl)));
+            }
         }
         #endregion
         #endregion
