@@ -8,6 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Timers;
+using System.Collections.Specialized;
 
 namespace OnlineBusinessAnalyst
 {
@@ -16,6 +17,7 @@ namespace OnlineBusinessAnalyst
         #region Members
         private AbortableBackgroundWorker _worker;
         private Timer _searchTimer;
+        private StringCollection _invalidExtensions = Properties.Settings.Default.InvalidExtensions;
         #endregion
 
         #region Properties
@@ -72,6 +74,12 @@ namespace OnlineBusinessAnalyst
         #endregion
 
         #region Constructor
+        static CrawlerThread()
+        {
+            // ignore invalid certificates
+            ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => { return true; };
+        }
+
         public CrawlerThread(string url, string urlRegEx, string contentRegEx, int requestTimeout, int downloadTimeout, int searchTimeout)
         {
             this.Url = url;
@@ -116,6 +124,11 @@ namespace OnlineBusinessAnalyst
 
 
         #region Private
+        private bool IsValidUrl(string url)
+        {
+            return !string.IsNullOrWhiteSpace(url) && !_invalidExtensions.Contains(Path.GetExtension(url).ToLower());
+        }
+
         #region Worker Event Handlers
         void _worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
@@ -130,12 +143,17 @@ namespace OnlineBusinessAnalyst
             try
             {
                 // to do: handle redirects?
-                
+                if (!IsValidUrl(this.Url))
+                {
+                    LogManager.Instance.Logger.Info("Invalid url '{0}'.", this.Url);
+                    return;
+                }
+
                 var request = HttpWebRequest.Create(this.Url) as HttpWebRequest;
                 request.Timeout = this.RequestTimeout;
                 request.ReadWriteTimeout = this.DownloadTimeout;
                 var response = request.GetResponse() as HttpWebResponse;
-                
+
                 var status = response != null ? response.StatusCode : HttpStatusCode.ServiceUnavailable;
 
                 LogManager.Instance.Logger.Info("Request: {0}\tStatus: {1}", this.Url, status.ToString());
@@ -157,14 +175,20 @@ namespace OnlineBusinessAnalyst
                             _worker.ReportProgress(33);
                         }
 
+                        // start the search timer
+                        _searchTimer.Start();
+
                         var urlExpr = new Regex(this.UrlRegEx);
                         var urlResults = urlExpr.Matches(content);
                         foreach (Match match in urlResults)
                         {
-                            // fire url found
-                            if (UrlFound != null)
+                            if (IsValidUrl(match.Value))
                             {
-                                UrlFound(this, new CrawlerThreadEventArgs(match.Value));
+                                // fire url found
+                                if (UrlFound != null)
+                                {
+                                    UrlFound(this, new CrawlerThreadEventArgs(match.Value));
+                                }
                             }
                         }
 
@@ -179,9 +203,9 @@ namespace OnlineBusinessAnalyst
 
                         var contentExpr = new Regex(this.ContentRegEx);
                         var contentResults = contentExpr.Matches(content);
-                        foreach(Match match in contentResults)
+                        foreach (Match match in contentResults)
                         {
-                            if (ContentFound!=null)
+                            if (ContentFound != null)
                             {
                                 ContentFound(this, new CrawlerThreadEventArgs(match.Value));
                             }
@@ -191,9 +215,13 @@ namespace OnlineBusinessAnalyst
                     }
                 }
             }
+            catch (System.Threading.ThreadAbortException)
+            {
+                throw; // propagate to higher level
+            }
             catch (Exception ex)
             {
-                LogManager.Instance.Logger.Error("Error making or processing request.",  ex);
+                LogManager.Instance.Logger.Error("Error making or processing request. Url: '{0}'\r\n{1}", this.Url, ex.ToString());
             }
         }
 

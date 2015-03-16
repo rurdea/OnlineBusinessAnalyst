@@ -11,6 +11,8 @@ using System.Xml;
 using OnlineBusinessAnalystCrawler.Model;
 using MetroFramework.Forms;
 using OnlineBusinessAnalystCrawler.Utils;
+using OnlineBusinessAnalyst;
+using OnlineBusinessAnalystCrawler.Properties;
 
 namespace OnlineBusinessAnalystCrawler
 {
@@ -204,7 +206,16 @@ namespace OnlineBusinessAnalystCrawler
         #region Start Stop Pause
         private void btnStart_Click(object sender, EventArgs e)
         {
-
+            var threadManager = new CrawlerThreadManager(Settings.Default.StartingURL,
+                                                         Settings.Default.URLRegEx,
+                                                         Settings.Default.ContentRegEx,
+                                                         Settings.Default.MaxWebThreads,
+                                                         Settings.Default.RequestTimeOut,
+                                                         Settings.Default.SearchTimeout,
+                                                         Settings.Default.DownloadTimeout,
+                                                         Settings.Default.SaveBuffer,
+                                                         Settings.Default.StorageInfo);
+            threadManager.Start();
         }
 
         private void btnStop_Click(object sender, EventArgs e)
