@@ -1,0 +1,5 @@
+D:\MyProjects\OnlineBusinessAnalyst\OnlineBusinessAnalyst\bin\Debug\OnlineBusinessAnalyst.dll
+D:\MyProjects\OnlineBusinessAnalyst\OnlineBusinessAnalyst\bin\Debug\OnlineBusinessAnalyst.pdb
+D:\MyProjects\OnlineBusinessAnalyst\OnlineBusinessAnalyst\obj\Debug\OnlineBusinessAnalyst.csprojResolveAssemblyReference.cache
+D:\MyProjects\OnlineBusinessAnalyst\OnlineBusinessAnalyst\obj\Debug\OnlineBusinessAnalyst.dll
+D:\MyProjects\OnlineBusinessAnalyst\OnlineBusinessAnalyst\obj\Debug\OnlineBusinessAnalyst.pdb

@@ -7,18 +7,28 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Xml;
+using OnlineBusinessAnalystCrawler.Model;
+using MetroFramework.Forms;
+using OnlineBusinessAnalystCrawler.Utils;
 
 namespace OnlineBusinessAnalystCrawler
 {
-    public partial class Crawler : Form
+    public partial class Crawler : MetroForm
     {
+        private string m_strSettingName;
+        
+        private List<SettingsModel> ConfigSettingsList = new List<SettingsModel>();
 
         public Crawler()
         {
             InitializeComponent();
             //tbBrowseSettings.Text = path;
             //rtbSettings.Text = File.ReadAllText(path);
-            UpdateSettingStatus();
+            //UpdateSettingStatus();
+            lblSettingStatus.Text = string.Format(Constants.SettingsMessageHeader, Constants.NoSettingsLoaded);
+
+            LoadSettings();
         }
 
 
@@ -42,6 +52,7 @@ namespace OnlineBusinessAnalystCrawler
 
         private void btnLoadSettings_Click(object sender, EventArgs e)
         {
+            LoadSettings();
             /*
             try
             {
@@ -67,6 +78,8 @@ namespace OnlineBusinessAnalystCrawler
 
         private void btnSaveSettings_Click(object sender, EventArgs e)
         {
+
+            UpdateSettings();
             /*
             try
             {
@@ -93,6 +106,97 @@ namespace OnlineBusinessAnalystCrawler
             }
              * */
         }
+
+
+        private void LoadSettings()
+        {
+            try
+            {
+                string strFile = null;
+                XmlDocument ConfigDoc = new XmlDocument();
+                //Store the name of the file
+                strFile = string.Format(Constants.SettingsContainer, Directory.GetCurrentDirectory().ToString());
+                //Load the configuration file as XML document
+                ConfigDoc.Load(strFile);
+                //Assign  the [applicationSettings] node 
+                XmlNode applicationSettingsNode = ConfigDoc.GetElementsByTagName("applicationSettings")[0];
+
+                //For reading the user settings use below
+                //Dim applicationSettingsNode As XmlNode = ConfigDoc.GetElementsByTagName("userSettings")(0)
+
+                ConfigSettingsList.Clear();
+
+                //Run for each child node and create the ConfigSettingsList collection of [applicationSettings] child nodes
+                foreach (XmlNode objXmlNode in applicationSettingsNode.FirstChild.ChildNodes)
+                {
+                    var objConfigSettings = new SettingsModel();
+                    var _with1 = objConfigSettings;
+                    _with1.SettingName = objXmlNode.Attributes[0].Value;
+                    _with1.SerializeAs = objXmlNode.Attributes[1].Value;
+                    _with1.SettingValue = objXmlNode.FirstChild.InnerText;
+                    ConfigSettingsList.Add(objConfigSettings);
+                }
+
+                //Assign the collection to Datasource
+                ConfigSettingsBindingSource.DataSource = ConfigSettingsList;
+
+
+                lblSettingStatus.Text = string.Format(Constants.SettingsMessageHeader, Constants.SettingsLoaded);
+            }
+            catch (Exception ex)
+            {
+                //TODO: Use log instead
+                MetroFramework.MetroMessageBox.Show(this, ex.Message, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateSettings()
+        {
+            try
+            {
+                string strFile = null;
+                XmlDocument ConfigDoc = new XmlDocument();
+                strFile = string.Format(Constants.SettingsContainer, Directory.GetCurrentDirectory().ToString());
+                ConfigDoc.Load(strFile);
+                XmlNode applicationSettingsNode = ConfigDoc.GetElementsByTagName("applicationSettings")[0];
+
+                //For reading the user settings use below
+                //Dim applicationSettingsNode As XmlNode = ConfigDoc.GetElementsByTagName("userSettings")(0)
+
+
+
+                foreach (XmlNode objXmlNode in applicationSettingsNode.FirstChild.ChildNodes)
+                {
+                    m_strSettingName = objXmlNode.Attributes[0].Value;
+
+                    var objConfigSettings = ConfigSettingsList.Find(GetSetting);
+
+                    if (objConfigSettings != null)
+                    {
+                        var _with1 = objConfigSettings;
+                        objXmlNode.Attributes[0].Value = _with1.SettingName;
+                        objXmlNode.Attributes[1].Value = _with1.SerializeAs;
+                        objXmlNode.FirstChild.InnerText = _with1.SettingValue;
+                    }
+                }
+                ConfigDoc.Save(strFile);
+                MetroFramework.MetroMessageBox.Show(this, "Updated Successfully.", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                lblSettingStatus.Text = string.Format(Constants.SettingsMessageHeader, Constants.SettingsUpdated);
+            }
+            catch (Exception ex)
+            {
+                //TODO: Use log instead
+                MetroFramework.MetroMessageBox.Show(this, ex.Message, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+        }
+
+        private bool GetSetting(SettingsModel objConfigSettings)
+        {
+            return m_strSettingName == objConfigSettings.SettingName;
+        }
+
+
         #endregion
 
 
@@ -113,6 +217,11 @@ namespace OnlineBusinessAnalystCrawler
 
         }
         #endregion
+
+        private void metroGrid1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
 
 
     }
