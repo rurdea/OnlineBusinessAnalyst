@@ -77,6 +77,7 @@
       <DependentUpon>Crawler.cs</DependentUpon>
     </Compile>
     <Compile Include="Logger.cs" />
+    <Compile Include="Model\DisplayNodeModel.cs" />
     <Compile Include="Model\SettingsModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="TestForm.Designer.cs">
       <DependentUpon>TestForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utils\TreeNodeEx.cs" />
     <EmbeddedResource Include="Crawler.resx">
       <DependentUpon>Crawler.cs</DependentUpon>
     </EmbeddedResource>

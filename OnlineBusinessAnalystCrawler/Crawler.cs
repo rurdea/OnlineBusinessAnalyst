@@ -14,13 +14,26 @@ using OnlineBusinessAnalystCrawler.Utils;
 using OnlineBusinessAnalyst;
 using OnlineBusinessAnalystCrawler.Properties;
 using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace OnlineBusinessAnalystCrawler
 {
     public partial class Crawler : MetroForm
     {
+        private CrawlerThreadManager threadManager = new CrawlerThreadManager(Settings.Default.StartingURL,
+                                                         Settings.Default.URLRegEx,
+                                                         Settings.Default.ContentRegEx,
+                                                         Settings.Default.MaxWebThreads,
+                                                         Settings.Default.RequestTimeOut,
+                                                         Settings.Default.SearchTimeout,
+                                                         Settings.Default.DownloadTimeout,
+                                                         Settings.Default.SaveBuffer,
+                                                         Settings.Default.StorageInfo);
+
         private string m_strSettingName;
-        
+
+        private List<DisplayNodeModel> urlsToDisplay = new List<DisplayNodeModel>();
+
         private List<SettingsModel> ConfigSettingsList = new List<SettingsModel>();
 
         public Crawler()
@@ -32,6 +45,8 @@ namespace OnlineBusinessAnalystCrawler
             lblSettingStatus.Text = string.Format(Constants.SettingsMessageHeader, Constants.NoSettingsLoaded);
 
             LoadSettings();
+
+
         }
 
 
@@ -207,7 +222,13 @@ namespace OnlineBusinessAnalystCrawler
         #region Start Stop Pause
         private void btnStart_Click(object sender, EventArgs e)
         {
-            var threadManager = new CrawlerThreadManager(Settings.Default.StartingURL,
+            tabControl.SelectedIndex = 0;
+
+            btnStop.Enabled = true;
+            btnPause.Enabled = true;
+            btnStart.Enabled = false;
+
+            threadManager = new CrawlerThreadManager(Settings.Default.StartingURL,
                                                          Settings.Default.URLRegEx,
                                                          Settings.Default.ContentRegEx,
                                                          Settings.Default.MaxWebThreads,
@@ -225,35 +246,141 @@ namespace OnlineBusinessAnalystCrawler
 
         void threadManager_CrawlCompleted(object sender, CrawlCompletedEventArgs e)
         {
+            var url = e.Url;
+
             Debug.WriteLine(e.Url);
+
         }
+
+        private delegate void ThreadManagerCrawlProgressChangedDelegate(object sender, ProgressChangedEventArgs e);
 
         void threadManager_CrawlProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            Debug.WriteLine(((CrawlerEventArgs)e.UserState).Url);
+            var url = ((CrawlerEventArgs)e.UserState).Url;
+
+            Debug.WriteLine(url);
+
+            var nodeToUpdate = treeViewUrls.Nodes.Cast<TreeNode>().Where(node => node.Tag.ToString() == url).FirstOrDefault();
+            if (nodeToUpdate != null)
+            {
+                nodeToUpdate.Text = string.Format("{0} ( {1} )", nodeToUpdate.Tag.ToString(), e.ProgressPercentage.ToString());
+            }
         }
+
+        private delegate void ThreadManagerCrawlStartedDelegate(object sender, CrawlerEventArgs e);
 
         void threadManager_CrawlStarted(object sender, CrawlerEventArgs e)
         {
+            var newUrl = new DisplayNodeModel()
+                {
+                    ParentUrl = e.ParentUrl,
+                    Url = e.Url,
+                    Progress = 0
+                };
+
+            if (!urlsToDisplay.Contains(newUrl))
+            {
+                urlsToDisplay.Add(newUrl);
+
+                if (this.treeViewUrls.InvokeRequired)
+                {
+                    this.treeViewUrls.Invoke(new ThreadManagerCrawlStartedDelegate(this.threadManager_CrawlStarted), sender, e);
+                }
+                else
+                {
+
+                    try
+                    {
+                        treeViewUrls.BeginUpdate();
+
+                        treeViewUrls.SuspendLayout();
+
+                        if (string.IsNullOrEmpty(newUrl.ParentUrl))
+                        {
+
+                            treeViewUrls.Nodes.Clear();
+
+                            var rootNode = new TreeNode()
+                            {
+                                Text = newUrl.Url,
+                                Tag = newUrl.Url
+                            };
+
+                            treeViewUrls.Nodes.Add(rootNode);
+                        }
+                        else
+                        {
+
+                            var parent = treeViewUrls.Nodes.Cast<TreeNode>().Where(node => node.Tag.ToString() == newUrl.ParentUrl).FirstOrDefault();
+                            if (parent != null)
+                            {
+                                var childNode = new TreeNode()
+                                {
+                                    Text = newUrl.Url,
+                                    Tag = newUrl.Url
+                                };
+
+                                childNode.EnsureVisible();
+
+                                parent.Nodes.Add(childNode);
+                            }
+
+                        }
+
+
+                    }
+                    finally
+                    {
+                        treeViewUrls.ExpandAll();
+
+                        treeViewUrls.ResumeLayout();
+                        treeViewUrls.EndUpdate();
+                    }
+
+
+
+
+                }
+
+
+
+            }
+
             Debug.WriteLine(e.Url);
+
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
 
+            threadManager.Stop();
+
+            tabControl.SelectedIndex = 0;
+
+            btnStop.Enabled = false;
+            btnPause.Enabled = false;
+            btnStart.Enabled = true;
         }
 
         private void btnPause_Click(object sender, EventArgs e)
         {
+            tabControl.SelectedIndex = 0;
 
+            if (btnPause.Text == "Pause")
+            {
+
+                btnPause.Text = "Resume";
+            }
+            else
+            {
+                btnPause.Text = "Pause";
+            }
+
+            btnStop.Enabled = true;
+            btnStart.Enabled = false;
         }
+
         #endregion
-
-        private void metroGrid1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
 
     }
 }

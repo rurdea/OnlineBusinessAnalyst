@@ -36,6 +36,7 @@ namespace OnlineBusinessAnalystCrawler
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Crawler));
             this.tabControl = new MetroFramework.Controls.MetroTabControl();
             this.tabProcesses = new System.Windows.Forms.TabPage();
+            this.treeViewUrls = new System.Windows.Forms.TreeView();
             this.tabSettings = new System.Windows.Forms.TabPage();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btnSaveSettings = new MetroFramework.Controls.MetroButton();
@@ -55,6 +56,7 @@ namespace OnlineBusinessAnalystCrawler
             this.btnStart = new MetroFramework.Controls.MetroButton();
             this.lblSettingStatus = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
+            this.tabProcesses.SuspendLayout();
             this.tabSettings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -79,7 +81,7 @@ namespace OnlineBusinessAnalystCrawler
             this.tabControl.Location = new System.Drawing.Point(0, 0);
             this.tabControl.Multiline = true;
             this.tabControl.Name = "tabControl";
-            this.tabControl.SelectedIndex = 1;
+            this.tabControl.SelectedIndex = 0;
             this.tabControl.Size = new System.Drawing.Size(747, 427);
             this.tabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.tabControl.TabIndex = 0;
@@ -88,6 +90,7 @@ namespace OnlineBusinessAnalystCrawler
             // 
             // tabProcesses
             // 
+            this.tabProcesses.Controls.Add(this.treeViewUrls);
             this.tabProcesses.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabProcesses.ImageIndex = 0;
             this.tabProcesses.Location = new System.Drawing.Point(4, 48);
@@ -97,6 +100,14 @@ namespace OnlineBusinessAnalystCrawler
             this.tabProcesses.TabIndex = 0;
             this.tabProcesses.Text = "Processes";
             this.tabProcesses.UseVisualStyleBackColor = true;
+            // 
+            // treeViewUrls
+            // 
+            this.treeViewUrls.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeViewUrls.Location = new System.Drawing.Point(3, 3);
+            this.treeViewUrls.Name = "treeViewUrls";
+            this.treeViewUrls.Size = new System.Drawing.Size(733, 369);
+            this.treeViewUrls.TabIndex = 0;
             // 
             // tabSettings
             // 
@@ -225,7 +236,6 @@ namespace OnlineBusinessAnalystCrawler
             this.metroGrid1.Size = new System.Drawing.Size(733, 325);
             this.metroGrid1.TabIndex = 1;
             this.metroGrid1.Theme = MetroFramework.MetroThemeStyle.Dark;
-            this.metroGrid1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.metroGrid1_CellContentClick);
             // 
             // settingNameDataGridViewTextBoxColumn1
             // 
@@ -301,8 +311,9 @@ namespace OnlineBusinessAnalystCrawler
             this.btnPause.Name = "btnPause";
             this.btnPause.Size = new System.Drawing.Size(87, 29);
             this.btnPause.TabIndex = 3;
-            this.btnPause.Text = "           Pause";
+            this.btnPause.Text = "Pause";
             this.btnPause.UseSelectable = true;
+            this.btnPause.Visible = false;
             this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
             // 
             // btnStop
@@ -312,7 +323,7 @@ namespace OnlineBusinessAnalystCrawler
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(87, 29);
             this.btnStop.TabIndex = 2;
-            this.btnStop.Text = "           Stop";
+            this.btnStop.Text = "Stop";
             this.btnStop.UseSelectable = true;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
@@ -322,7 +333,7 @@ namespace OnlineBusinessAnalystCrawler
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(87, 29);
             this.btnStart.TabIndex = 1;
-            this.btnStart.Text = "           Start";
+            this.btnStart.Text = "Start";
             this.btnStart.UseSelectable = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
@@ -331,7 +342,7 @@ namespace OnlineBusinessAnalystCrawler
             this.lblSettingStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblSettingStatus.AutoSize = true;
             this.lblSettingStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSettingStatus.Location = new System.Drawing.Point(483, 25);
+            this.lblSettingStatus.Location = new System.Drawing.Point(311, 25);
             this.lblSettingStatus.Name = "lblSettingStatus";
             this.lblSettingStatus.Size = new System.Drawing.Size(254, 20);
             this.lblSettingStatus.TabIndex = 0;
@@ -351,6 +362,7 @@ namespace OnlineBusinessAnalystCrawler
             this.Text = "Online Business AnalystCrawler";
             this.Theme = MetroFramework.MetroThemeStyle.Dark;
             this.tabControl.ResumeLayout(false);
+            this.tabProcesses.ResumeLayout(false);
             this.tabSettings.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();
@@ -374,6 +386,9 @@ namespace OnlineBusinessAnalystCrawler
         private MetroTabControl tabControl;
         private System.Windows.Forms.TabPage tabProcesses;
         private System.Windows.Forms.TabPage tabSettings;
+
+        private System.Windows.Forms.TreeView treeViewUrls;
+
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tbBrowseSettings;
