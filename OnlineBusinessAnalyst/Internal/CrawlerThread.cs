@@ -151,6 +151,8 @@ namespace OnlineBusinessAnalyst
         {
             try
             {
+                _worker.ReportProgress(0);
+
                 // to do: handle redirects?
                 if (!IsValidUrl(this.Url))
                 {

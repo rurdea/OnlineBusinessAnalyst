@@ -246,9 +246,20 @@ namespace OnlineBusinessAnalystCrawler
 
         void threadManager_CrawlCompleted(object sender, CrawlCompletedEventArgs e)
         {
+            if (this.InvokeRequired)
+            {
+                MethodInvoker del = delegate { threadManager_CrawlCompleted(sender, e); };
+                this.Invoke(del, sender, e);
+                return;
+            }
+
             var url = e.Url;
 
-            Debug.WriteLine(e.Url);
+            var node = GetTreeNode(url);
+            if (node != null)
+            {
+                UpdateNodeText(node, 100, e.Status);
+            }
 
         }
 
@@ -256,14 +267,20 @@ namespace OnlineBusinessAnalystCrawler
 
         void threadManager_CrawlProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            if (this.InvokeRequired)
+            {
+                MethodInvoker del = delegate { threadManager_CrawlProgressChanged(sender, e); };
+                this.Invoke(del, sender, e);
+                return;
+            }
             var url = ((CrawlerEventArgs)e.UserState).Url;
 
             Debug.WriteLine(url);
 
-            var nodeToUpdate = treeViewUrls.Nodes.Cast<TreeNode>().Where(node => node.Tag.ToString() == url).FirstOrDefault();
+            var nodeToUpdate = GetTreeNode(url);
             if (nodeToUpdate != null)
             {
-                nodeToUpdate.Text = string.Format("{0} ( {1} )", nodeToUpdate.Tag.ToString(), e.ProgressPercentage.ToString());
+                UpdateNodeText(nodeToUpdate, e.ProgressPercentage, null);
             }
         }
 
@@ -311,7 +328,7 @@ namespace OnlineBusinessAnalystCrawler
                         else
                         {
 
-                            var parent = treeViewUrls.Nodes.Cast<TreeNode>().Where(node => node.Tag.ToString() == newUrl.ParentUrl).FirstOrDefault();
+                            var parent = GetTreeNode(newUrl.ParentUrl);
                             if (parent != null)
                             {
                                 var childNode = new TreeNode()
@@ -324,10 +341,7 @@ namespace OnlineBusinessAnalystCrawler
 
                                 parent.Nodes.Add(childNode);
                             }
-
                         }
-
-
                     }
                     finally
                     {
@@ -336,23 +350,14 @@ namespace OnlineBusinessAnalystCrawler
                         treeViewUrls.ResumeLayout();
                         treeViewUrls.EndUpdate();
                     }
-
-
-
-
                 }
-
-
-
             }
 
             Debug.WriteLine(e.Url);
-
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-
             threadManager.Stop();
 
             tabControl.SelectedIndex = 0;
@@ -380,6 +385,15 @@ namespace OnlineBusinessAnalystCrawler
             btnStart.Enabled = false;
         }
 
+        private TreeNode GetTreeNode(string tag)
+        {
+            return treeViewUrls.GetAllNodes().FirstOrDefault(n => n.Tag.Equals(tag));
+        }
+
+        private void UpdateNodeText(TreeNode node, int percentage, bool? status)
+        {
+            node.Text = string.Format("{0} (Progress: {1}%, Status: {2} )", node.Tag.ToString(), percentage.ToString(), status.HasValue ? status.Value ? "OK" : "Error" : "");
+        }
         #endregion
 
     }

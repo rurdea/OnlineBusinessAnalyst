@@ -44,15 +44,6 @@ namespace OnlineBusinessAnalystCrawler.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("5")]
-        public int MaxWebThreads {
-            get {
-                return ((int)(this["MaxWebThreads"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("2000")]
         public int RequestTimeOut {
             get {
@@ -138,6 +129,15 @@ namespace OnlineBusinessAnalystCrawler.Properties {
         public global::System.Drawing.Point sad {
             get {
                 return ((global::System.Drawing.Point)(this["sad"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int MaxWebThreads {
+            get {
+                return ((int)(this["MaxWebThreads"]));
             }
         }
     }

@@ -15,8 +15,8 @@ namespace OnlineBusinessAnalyst
         private ConcurrentList<CrawlerThread> _activeCrawlers = new ConcurrentList<CrawlerThread>();
         // queue for storing urls that need to be crawled
         private ConcurrentQueue<CrawlerThread> _crawlerQueue = new ConcurrentQueue<CrawlerThread>();
-        // list for visited urls;
-        private ConcurrentList<string> _visitedUrls = new ConcurrentList<string>();
+        // list for unique urls;
+        private ConcurrentList<string> _uniqueUrls = new ConcurrentList<string>();
         // content saver instance
         private ContentSaver.ContentSaver _contentSaver;
         #endregion
@@ -81,14 +81,6 @@ namespace OnlineBusinessAnalyst
             get;
             private set;
         }
-
-        public string[] VisitedUrls
-        {
-            get
-            {
-                return _visitedUrls.ToArray();
-            }
-        }
         #endregion
 
         public CrawlerThreadManager(string startUrl, string urlRegEx, string contentRegEx, int maxThreads, int requestTimeout, int searchTimeout, int downloadTimeout, int saveBuffer, string storageInfo)
@@ -123,6 +115,8 @@ namespace OnlineBusinessAnalyst
             {
                 // force stop all running crawlers
                 _activeCrawlers.Where(c => c.IsBusy).ToList().ForEach(c=>c.Stop());
+                // empty queue - todo: make it thread safe
+                _crawlerQueue = new ConcurrentQueue<CrawlerThread>();
                 IsBusy = false;
             }
         }
@@ -175,7 +169,6 @@ namespace OnlineBusinessAnalyst
 
         private void StartCrawlerThread(CrawlerThread thread)
         {
-            _visitedUrls.Add(thread.Url);
             _activeCrawlers.Add(thread);
             if (CrawlStarted!=null)
             {
@@ -223,8 +216,10 @@ namespace OnlineBusinessAnalyst
 
         void thread_UrlFound(object sender, CrawlerThreadEventArgs e)
         {
-            if (!_visitedUrls.Contains(e.Match, StringComparer.OrdinalIgnoreCase))
+            if (!_uniqueUrls.Contains(e.Match, StringComparer.OrdinalIgnoreCase))
             {
+                _uniqueUrls.Add(e.Match);
+
                 var thread = sender as CrawlerThread;
                 var newThread = InitializeCrawlerThread(e.Match, thread.Url);            
                 // start crawling of add to queue if max threads is reached
